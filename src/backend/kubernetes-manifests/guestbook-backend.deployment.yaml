@@ -16,13 +16,17 @@ spec:
       labels:
         app: python-guestbook
         tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
     spec:
       initContainers:
       - name: init-db-ready
         image: mongo:4
         command: ['/bin/sh', '-c']
         args:
-          - echo "Waiting for mongodb at python-guestbook-mongodb:27017 to go live before the BE..."; 
+          - echo "Waiting for mongodb at python-guestbook-mongodb:27017 to go live before the BE...";
           - until (mongo --host python-guestbook-mongodb:27017 >/dev/null) do echo "Waiting for connection for 2 sec."; sleep 2; done
       containers:
       - name: backend
@@ -35,3 +39,29 @@ spec:
           value: "8080"
         - name: GUESTBOOK_DB_ADDR
           value: "python-guestbook-mongodb:27017"
+        # Elastic APM environment variables
+        - name: ELASTIC_APM_SERVER_URL
+          value: "http://apm-server.monitoring:8200"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: "python-guestbook-backend"
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "development"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /messages
+            port: http-server
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /messages
+            port: http-server
+          initialDelaySeconds: 15
+          periodSeconds: 10
