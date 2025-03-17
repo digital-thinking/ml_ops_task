@@ -19,7 +19,8 @@ portForward:
   # or users can define explicit port forwards here.
   # For more info, visit https://skaffold.dev/docs/pipeline-stages/port-forwarding/#UDPF
   - resourceType: service
-    resourceName: python-guestbook-frontend 
+    resourceName: python-guestbook-frontend
+    namespace: default
     port: 80
     localPort: 4504
 profiles:
