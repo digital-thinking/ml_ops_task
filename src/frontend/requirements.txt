@@ -1,4 +1,4 @@
-Flask==2.0.2
-requests==2.27.1
+Flask==2.3.3
+requests==2.31.0
 python-dateutil==2.8.2
-ptvsd==4.3.2 # Required for debugging.
+debugpy # Required for debugging
