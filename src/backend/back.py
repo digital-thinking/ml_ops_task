@@ -7,8 +7,30 @@ from flask import Flask, jsonify, request
 from flask_pymongo import PyMongo
 import bleach
 
+# Import monitoring libraries
+from elasticapm.contrib.flask import ElasticAPM
+from prometheus_flask_exporter import PrometheusMetrics
+
 app = Flask(__name__)
 app.config["MONGO_URI"] = 'mongodb://{}/guestbook'.format(os.environ.get('GUESTBOOK_DB_ADDR'))
+
+# Configure Elastic APM
+app.config['ELASTIC_APM'] = {
+    'SERVICE_NAME': 'python-guestbook-backend',
+    'SERVER_URL': 'http://apm-server.monitoring:8200',
+    'ENVIRONMENT': 'development',
+    'CAPTURE_BODY': 'all',
+    'TRANSACTION_SAMPLE_RATE': 1.0,
+}
+
+# Initialize monitoring
+apm = ElasticAPM(app)
+metrics = PrometheusMetrics(app)
+
+# General metrics - automatically track standard things
+metrics.info('app_info', 'Application info', version='1.0.0')
+
+# Initialize MongoDB connection
 mongo = PyMongo(app)
 
 @app.route('/messages', methods=['GET'])
@@ -26,7 +48,21 @@ def add_message():
                 'message':bleach.clean(raw_data['message']),
                 'date':time.time()}
     mongo.db.messages.insert_one(msg_data)
-    return  jsonify({}), 201
+    return jsonify({}), 201
+
+# Add a health check endpoint
+@app.route('/health', methods=['GET'])
+@metrics.do_not_track()
+def health_check():
+    """ health check endpoint for readiness probes """
+    return jsonify({"status": "ok"}), 200
+
+metrics.register_default(
+    metrics.counter(
+        'by_path_counter', 'Request count by request paths',
+        labels={'path': lambda: request.path}
+    )
+)
 
 if __name__ == '__main__':
     for v in ['PORT', 'GUESTBOOK_DB_ADDR']:
