@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apm-server
+  namespace: monitoring
+  labels:
+    app: apm-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apm-server
+  template:
+    metadata:
+      labels:
+        app: apm-server
+    spec:
+      containers:
+      - name: apm-server
+        image: docker.elastic.co/apm/apm-server:7.14.0
+        ports:
+        - containerPort: 8200
+          name: http
+        args:
+        - "--strict.perms=false"
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/apm-server/apm-server.yml
+          readOnly: true
+          subPath: apm-server.yml
+      volumes:
+      - name: config
+        configMap:
+          defaultMode: 0644
+          name: apm-server-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: apm-server
+  namespace: monitoring
+  labels:
+    app: apm-server
+spec:
+  selector:
+    app: apm-server
+  ports:
+  - port: 8200
+    targetPort: 8200
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: apm-server-config
+  namespace: monitoring
+  labels:
+    app: apm-server
+data:
+  apm-server.yml: |-
+    apm-server:
+      host: "0.0.0.0:8200"
+      secret_token: ""
+
+    output.elasticsearch:
+      hosts: ["elasticsearch:9200"]
+      username: ""
+      password: ""
+
+    setup.kibana:
+      host: "kibana:5601"

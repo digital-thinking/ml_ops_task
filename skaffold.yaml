@@ -4,9 +4,9 @@ build:
   local:
     concurrency: 0
 requires:
+  - path: ./monitoring
   - path: ./src/backend
   - path: ./src/frontend
-#  - path: ./monitoring
 profiles:
 - name: cloudbuild
   build:

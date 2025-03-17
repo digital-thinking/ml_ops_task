@@ -1,0 +1,33 @@
+apiVersion: skaffold/v2beta18
+kind: Config
+metadata:
+  name: monitoring
+deploy:
+  kubectl:
+    manifests:
+      - ./namespace.yaml
+      
+#      - ./prometheus/*.yaml
+#
+#      - ./alertmanager/*.yaml
+#
+#      - ./grafana/*.yaml
+#
+      - ./elk/*.yaml
+      
+portForward:
+#  - resourceType: service
+#    resourceName: grafana
+#    namespace: monitoring
+#    port: 3000
+#    localPort: 3000
+  - resourceType: service
+    resourceName: kibana
+    namespace: monitoring
+    port: 5601
+    localPort: 5601
+
+profiles:
+- name: cloudbuild
+  build:
+    googleCloudBuild: {}
