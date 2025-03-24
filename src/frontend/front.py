@@ -9,8 +9,27 @@ from flask import Flask, render_template, redirect, url_for, request, jsonify
 import requests
 import dateutil.relativedelta
 
+# Import monitoring libraries
+from elasticapm.contrib.flask import ElasticAPM
+from prometheus_flask_exporter import PrometheusMetrics
+
 app = Flask(__name__)
 app.config["BACKEND_URI"] = 'http://{}/messages'.format(os.environ.get('GUESTBOOK_API_ADDR'))
+
+# Configure Elastic APM
+app.config['ELASTIC_APM'] = {
+    'SERVICE_NAME': 'python-guestbook-frontend',
+    'SERVER_URL': 'http://apm-server.monitoring:8200',
+    'ENVIRONMENT': 'development',
+    'CAPTURE_BODY': 'all',
+    'TRANSACTION_SAMPLE_RATE': 1.0,
+}
+
+# Initialize monitoring
+apm = ElasticAPM(app)
+metrics = PrometheusMetrics(app)
+
+metrics.info('app_info', 'Application info', version='1.0')
 
 @app.route('/')
 def main():
@@ -44,6 +63,13 @@ def format_duration(timestamp):
             return "{} {}s ago".format(n, unit)
     return "just now"
 
+
+metrics.register_default(
+    metrics.counter(
+        'by_path_counter', 'Request count by request paths',
+        labels={'path': lambda: request.path}
+    )
+)
 
 if __name__ == '__main__':
     for v in ['PORT', 'GUESTBOOK_API_ADDR']:

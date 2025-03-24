@@ -6,21 +6,19 @@ deploy:
   kubectl:
     manifests:
       - ./namespace.yaml
-      
-#      - ./prometheus/*.yaml
-#
-#      - ./alertmanager/*.yaml
-#
-#      - ./grafana/*.yaml
-#
+      - ./alertmanager/*.yaml
+      - ./prometheus/*.yaml
+      - ./grafana/*.yaml
       - ./elk/*.yaml
-      
+#
+#
+
 portForward:
-#  - resourceType: service
-#    resourceName: grafana
-#    namespace: monitoring
-#    port: 3000
-#    localPort: 3000
+  - resourceType: service
+    resourceName: grafana
+    namespace: monitoring
+    port: 3000
+    localPort: 3000
   - resourceType: service
     resourceName: kibana
     namespace: monitoring

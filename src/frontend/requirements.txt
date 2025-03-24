@@ -1,4 +1,6 @@
 Flask==2.3.3
 requests==2.31.0
 python-dateutil==2.8.2
+elastic-apm[flask]==6.23.0
+prometheus-flask-exporter==0.23.2
 debugpy # Required for debugging
